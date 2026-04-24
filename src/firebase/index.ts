@@ -17,6 +17,18 @@ export function initializeFirebase() {
       // Attempt to initialize via Firebase App Hosting environment variables
       firebaseApp = initializeApp();
     } catch (e) {
+      // Check if config has required values before attempting to initialize with config
+      const hasRequiredConfig = firebaseConfig.apiKey && firebaseConfig.projectId;
+      
+      if (!hasRequiredConfig) {
+        // During build time, environment variables may not be available
+        // Return a safe fallback state
+        if (process.env.NODE_ENV === "production") {
+          console.warn('Firebase configuration incomplete. Initialization deferred to client side.', e);
+        }
+        throw new Error('Firebase config not available during build. This is normal.');
+      }
+      
       // Only warn in production because it's normal to use the firebaseConfig to initialize
       // during development
       if (process.env.NODE_ENV === "production") {
