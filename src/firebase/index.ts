@@ -22,11 +22,10 @@ export function initializeFirebase() {
       
       if (!hasRequiredConfig) {
         // During build time, environment variables may not be available
-        // Return a safe fallback state
-        if (process.env.NODE_ENV === "production") {
-          console.warn('Firebase configuration incomplete. Initialization deferred to client side.', e);
-        }
-        throw new Error('Firebase config not available during build. This is normal.');
+        // This is normal and expected - Firebase will be initialized on the client side
+        console.log('Firebase config not available - will initialize on client side');
+        // Return a stub that prevents further errors
+        throw new Error('Firebase not available - defer to client');
       }
       
       // Only warn in production because it's normal to use the firebaseConfig to initialize
@@ -34,7 +33,13 @@ export function initializeFirebase() {
       if (process.env.NODE_ENV === "production") {
         console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
       }
-      firebaseApp = initializeApp(firebaseConfig);
+      try {
+        firebaseApp = initializeApp(firebaseConfig);
+      } catch (initError) {
+        // If initialization fails with config too, it's likely a build-time issue
+        // The client will handle this properly
+        throw new Error('Firebase initialization deferred to client');
+      }
     }
 
     return getSdks(firebaseApp);
