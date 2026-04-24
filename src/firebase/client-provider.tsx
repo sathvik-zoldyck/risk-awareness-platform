@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, type ReactNode, useEffect, useState } from 'react';
+import React, { useMemo, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase } from '@/firebase';
 
@@ -9,24 +9,21 @@ interface FirebaseClientProviderProps {
 }
 
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  const [firebaseServices, setFirebaseServices] = useState<ReturnType<typeof initializeFirebase> | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
+  const firebaseServices = useMemo(() => {
+    // Initialize Firebase on the client side, once per component mount.
+    // This must be wrapped in a try-catch to handle build-time scenarios
     try {
-      const services = initializeFirebase();
-      setFirebaseServices(services);
-    } catch (e) {
-      // Firebase initialization failed, likely during build time
-      // This is expected and will be retried when the page loads in the browser
-      console.log('Firebase initialization deferred to runtime');
-      setError(e instanceof Error ? e : new Error('Unknown error'));
+      return initializeFirebase();
+    } catch (error) {
+      // Firebase initialization failed - this is expected during builds
+      // Return null to signal that Firebase is not available
+      console.log('Firebase not available at this time');
+      return null;
     }
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
-  // During server-side rendering or build time when Firebase isn't available
-  // Still render children but without Firebase context
-  if (error || !firebaseServices) {
+  // If Firebase failed to initialize, still render children (they may not need Firebase)
+  if (!firebaseServices) {
     return <>{children}</>;
   }
 
