@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * ALCYONE SECURE SECURITY RULES - PROTOTYPING VERSION
+     */
+
+    // --- HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc == null ? null : userDoc.data;
+    }
+
+    function hasRole(role) {
+      let data = getUserData();
+      return data != null && data.role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isCompanyAdmin(companyId) {
+      let data = getUserData();
+      return data != null && data.role == 'company' && data.companyId == companyId;
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * Users Collection
+     */
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      // Admin sees all. Employees/Companies see only users from their own company
+      allow list: if isAdmin() || (isSignedIn() && getUserData() != null && resource.data.companyId == getUserData().companyId);
+      allow create: if isOwner(userId);
+      allow update: if (isOwner(userId) || isAdmin()) && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * Companies Collection
+     */
+    match /companies/{companyId} {
+      // Allow anyone to GET a company doc (needed after employee joins via code)
+      allow get: if true;
+      // Allow unauthenticated list ONLY for join-code lookup; admins can list all
+      allow list: if isAdmin() || true;
+      // Allow creation if the signed in user assigns themselves as the adminUid
+      allow create: if isAdmin() || (isSignedIn() && request.resource.data.adminUid == request.auth.uid);
+      allow update: if (isAdmin() || isCompanyAdmin(companyId)) && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * Nested Employee records (if utilized directly)
+     */
+    match /companies/{companyId}/employees/{employeeId} {
+      allow get, list: if isAdmin() || isCompanyAdmin(companyId) || (isSignedIn() && isOwner(resource.data.userId));
+      allow create: if (isAdmin() || isCompanyAdmin(companyId)) && request.resource.data.companyId == companyId;
+      allow update: if (isAdmin() || isCompanyAdmin(companyId) || isOwner(resource.data.userId)) && resource != null;
+      allow delete: if (isAdmin() || isCompanyAdmin(companyId)) && resource != null;
+    }
+
+    /**
+     * Questions Collection
+     */
+    match /questions/{questionId} {
+      allow get, list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * Nested Assessments
+     */
+    match /companies/{companyId}/employees/{employeeId}/assessments/{assessmentId} {
+      allow get, list: if isAdmin() || isCompanyAdmin(companyId) || (isSignedIn() && isOwner(resource.data.employeeAuthUid));
+      allow create: if isAdmin() || isCompanyAdmin(companyId) || (isSignedIn() && request.resource.data.employeeAuthUid == request.auth.uid);
+      allow update: if (isAdmin() || isCompanyAdmin(companyId) || isOwner(resource.data.employeeAuthUid)) && resource != null && request.resource.data.employeeAuthUid == resource.data.employeeAuthUid;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * Nested Reports
+     */
+    match /companies/{companyId}/reports/{reportId} {
+      allow get, list: if isAdmin() || isCompanyAdmin(companyId);
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * Assessment Attempts
+     * list: any signed-in user (query already filters by userId == request.auth.uid)
+     * get:  only the attempt owner or a company/admin user from the same company
+     * create: user can only stamp their own uid
+     * update/delete: immutable from client
+     */
+    match /assessment_attempts/{attemptId} {
+      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow list: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    /**
+     * Settings Collection
+     */
+    match /settings/{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

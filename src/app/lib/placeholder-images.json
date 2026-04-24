@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-secure",
+      "description": "Abstract cybersecurity background with digital locks and shields",
+      "imageUrl": "https://picsum.photos/seed/cyber1/1200/800",
+      "imageHint": "cybersecurity secure"
+    },
+    {
+      "id": "avatar-admin",
+      "description": "Professional admin avatar",
+      "imageUrl": "https://picsum.photos/seed/admin/200/200",
+      "imageHint": "professional man"
+    },
+    {
+      "id": "avatar-employee",
+      "description": "Employee avatar",
+      "imageUrl": "https://picsum.photos/seed/emp1/200/200",
+      "imageHint": "business person"
+    }
+  ]
+}

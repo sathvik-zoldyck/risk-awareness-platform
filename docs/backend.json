@@ -1,0 +1,437 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user account in the Alcyone Secure platform, associated with a specific role (Admin, Company, or Employee).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for authentication and communication.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the user."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role of the user within the platform (e.g., 'admin', 'company', 'employee')."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company this user belongs to, if their role is 'company' or 'employee'. (Relationship: Company 1:N User)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "name",
+        "role",
+        "createdAt"
+      ]
+    },
+    "Company": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Company",
+      "type": "object",
+      "description": "Represents a registered company account using the Alcyone Secure platform to manage employee cybersecurity assessments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Company entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the company."
+        },
+        "industry": {
+          "type": "string",
+          "description": "The industry sector the company operates in."
+        },
+        "size": {
+          "type": "string",
+          "description": "The size of the company (e.g., 'small', 'medium', 'large')."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "The primary contact email for the company.",
+          "format": "email"
+        },
+        "adminId": {
+          "type": "string",
+          "description": "Reference to the User who registered this company account. (Relationship: User 1:N Company)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the company account was registered.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "industry",
+        "size",
+        "contactEmail",
+        "adminId",
+        "createdAt"
+      ]
+    },
+    "Employee": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Employee",
+      "type": "object",
+      "description": "Represents an individual employee registered under a specific company for cybersecurity assessments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Employee entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the associated User entity for authentication. (Relationship: User 1:1 Employee)"
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company this employee belongs to. (Relationship: Company 1:N Employee)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the employee."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the employee.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The specific job role of the employee (e.g., 'Developer', 'HR', 'Manager'), used for role-based assessments."
+        },
+        "assessmentStatus": {
+          "type": "string",
+          "description": "The current status of the employee's assessment (e.g., 'not_started', 'in_progress', 'completed')."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "companyId",
+        "name",
+        "email",
+        "role",
+        "assessmentStatus"
+      ]
+    },
+    "Question": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Question",
+      "type": "object",
+      "description": "Stores details for a single cybersecurity assessment question, including its options, correct answer, and explanation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Question entity."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the question (e.g., 'basic', 'role_based', 'dpdp', 'scenario')."
+        },
+        "role": {
+          "type": "string",
+          "description": "The target role for this question ('all' or a specific employee role like 'developer', 'hr')."
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The full text of the cybersecurity question."
+        },
+        "options": {
+          "type": "array",
+          "description": "An array where each string is a JSON representation of an option object {id: string, text: string}. (e.g., [{\"id\":\"1\",\"text\":\"Option A\"}, {\"id\":\"2\",\"text\":\"Option B\"}])",
+          "items": {
+            "type": "string"
+          }
+        },
+        "correctOptionId": {
+          "type": "string",
+          "description": "The ID of the correct option for this question, referencing an ID within the 'options' array."
+        },
+        "explanation": {
+          "type": "string",
+          "description": "A brief explanation of the correct answer, possibly AI-generated."
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "The difficulty level of the question (e.g., 'easy', 'medium', 'hard')."
+        },
+        "createdBy": {
+          "type": "string",
+          "description": "Indicates whether the question was created by an 'admin' or by 'ai'."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the question was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "role",
+        "questionText",
+        "options",
+        "correctOptionId",
+        "explanation",
+        "difficulty",
+        "createdBy",
+        "createdAt"
+      ]
+    },
+    "Assessment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Assessment",
+      "type": "object",
+      "description": "Records the details and results of an employee's cybersecurity assessment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Assessment entity."
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "Reference to the Employee who took this assessment. (Relationship: Employee 1:N Assessment)"
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company this assessment belongs to. (Relationship: Company 1:N Assessment)"
+        },
+        "startedAt": {
+          "type": "string",
+          "description": "Timestamp when the assessment was started.",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "Timestamp when the assessment was completed, if applicable. This field is optional if the assessment is still in progress.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the assessment (e.g., 'in_progress', 'completed')."
+        },
+        "selectedRole": {
+          "type": "string",
+          "description": "The job role selected by the employee for this assessment."
+        },
+        "responses": {
+          "type": "array",
+          "description": "An array where each string is a JSON representation of a response object {questionId: string, selectedOptionId: string, isCorrect: boolean, timeTaken: number}. (e.g., [{\"questionId\":\"q1\",\"selectedOptionId\":\"o2\",\"isCorrect\":true,\"timeTaken\":15}])",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scores": {
+          "type": "string",
+          "description": "A JSON representation of the assessment scores, including section-wise and overall percentages, and maturity level. (e.g., {\"basic\":{\"score\":8,\"total\":10,\"percentage\":80},\"overall\":75,\"maturityLevel\":3})"
+        },
+        "badges": {
+          "type": "array",
+          "description": "An array of strings representing the names or IDs of badges earned by the employee in this assessment.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "An array of AI-generated textual recommendations based on the assessment results.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "employeeId",
+        "companyId",
+        "startedAt",
+        "status",
+        "selectedRole",
+        "responses",
+        "scores",
+        "badges",
+        "recommendations"
+      ]
+    },
+    "Report": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Report",
+      "type": "object",
+      "description": "Stores metadata and links to generated PDF reports for companies, summarizing assessment results.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Report entity."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company for which this report was generated. (Relationship: Company 1:N Report)"
+        },
+        "generatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the report was generated.",
+          "format": "date-time"
+        },
+        "pdfUrl": {
+          "type": "string",
+          "description": "A Firebase Storage URL pointing to the generated PDF report.",
+          "format": "uri"
+        },
+        "summaryStats": {
+          "type": "string",
+          "description": "A JSON representation of key summary statistics for the company's assessment performance. (e.g., {\"avgOverall\":70,\"avgDPDP\":65,\"totalEmployees\":50,\"weakAreas\":[\"Phishing\",\"Data Handling\"]})"
+        }
+      },
+      "required": [
+        "id",
+        "companyId",
+        "generatedAt",
+        "pdfUrl",
+        "summaryStats"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles, including their role and associated company ID. This document is the source of truth for a user's role and companyId, which are retrieved via get() on the current user's profile (/users/$(request.auth.uid)) in security rules to establish permissions for other collections. This is an accepted pattern for DBAC.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Auth User ID (UID) of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}",
+        "definition": {
+          "entityName": "Company",
+          "schema": {
+            "$ref": "#/backend/entities/Company"
+          },
+          "description": "Stores details for registered companies. Accessible by its 'adminId' (the user who registered it) or by any user whose 'companyId' (from their User document) matches the document's 'id'.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier for the company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/employees/{employeeId}",
+        "definition": {
+          "entityName": "Employee",
+          "schema": {
+            "$ref": "#/backend/entities/Employee"
+          },
+          "description": "Stores employee profiles associated with a specific company. The 'companyId' in the path ensures authorization independence for company-level access. The 'userId' field in the document links to the employee's User authentication record.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The ID of the parent company this employee belongs to."
+            },
+            {
+              "name": "employeeId",
+              "description": "The unique identifier for the employee within the company."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/questions/{questionId}",
+        "definition": {
+          "entityName": "Question",
+          "schema": {
+            "$ref": "#/backend/entities/Question"
+          },
+          "description": "Stores all cybersecurity assessment questions. This collection has a homogeneous security posture: read-only for company and employee roles, full CRUD for admin. Supports efficient listing for assessments.",
+          "params": [
+            {
+              "name": "questionId",
+              "description": "The unique identifier for the question."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/employees/{employeeId}/assessments/{assessmentId}",
+        "definition": {
+          "entityName": "Assessment",
+          "schema": {
+            "$ref": "#/backend/entities/Assessment"
+          },
+          "description": "Records details and results of an employee's cybersecurity assessment. Includes denormalized 'companyId' and 'employeeAuthUid' (the Firebase Auth UID of the employee taking the assessment) for authorization independence, allowing direct checks in security rules without additional get() calls to other documents. The 'employeeAuthUid' is crucial for employees to access their own assessments and for company admins to list assessments for their company's employees.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The ID of the parent company associated with this assessment."
+            },
+            {
+              "name": "employeeId",
+              "description": "The ID of the parent employee who took this assessment."
+            },
+            {
+              "name": "assessmentId",
+              "description": "The unique identifier for the assessment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}/reports/{reportId}",
+        "definition": {
+          "entityName": "Report",
+          "schema": {
+            "$ref": "#/backend/entities/Report"
+          },
+          "description": "Stores metadata and links to generated PDF reports for companies. The 'companyId' in the path and document ensures authorization independence for company-level access, allowing company administrators to securely list and retrieve reports for their specific company.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The ID of the parent company for which this report was generated."
+            },
+            {
+              "name": "reportId",
+              "description": "The unique identifier for the report."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for Alcyone Secure is designed around core principles of Authorization Independence, Structural Segregation, and consistent Access Modeling to ensure security, scalability, and debuggability. \n\n**Authorization Independence & Denormalization:**\n- **User Role and Company ID:** The `/users/{userId}` document acts as the primary source for a user's `role` and `companyId`. While this requires a `get()` operation in security rules to retrieve `get(/users/$(request.auth.uid)).data.role` or `.data.companyId`, this is an accepted and common pattern for authenticating the *current user's own identity and global attributes*, and does not introduce atomicity or debugging complexities associated with `get()`ing arbitrary parent documents.\n- **Nested Collections for Ownership:** Collections like `/companies/{companyId}/employees/{employeeId}`, `/companies/{companyId}/employees/{employeeId}/assessments/{assessmentId}`, and `/companies/{companyId}/reports/{reportId}` leverage hierarchical paths. This places `companyId` and `employeeId` directly into the path, making path-based authorization highly efficient and independent for parent-child relationships. Rules can simply check `request.path[1]` for `companyId` or `request.path[3]` for `employeeId` without needing `get()` calls.\n- **Assessment Document Denormalization (CRITICAL):** To avoid a `get()` dependency on the `/employees/{employeeId}` document for employee-specific assessment access, the `Assessment` entity will include a denormalized `employeeAuthUid` field (the `userId` of the employee as it appears in `/users/{userId}`). This allows rules to verify an employee's access to their own assessment solely by checking `request.auth.uid == resource.data.employeeAuthUid` without querying the `Employee` document, thus maintaining Authorization Independence.\n\n**Structural Segregation & QAPs (Rules are not Filters):**\n- **Homogeneous Security Posture:** Each collection is designed to have a uniform security posture. For example, `/questions/{questionId}` is universally read-only for employees/companies and full CRUD for admins. This simplifies rules significantly as the security requirements don't vary document-by-document within the same collection.\n- **Scoping for `list` operations:** The hierarchical structure naturally scopes `list` queries, enabling secure and efficient QAPs:\n    - Company administrators can `list` employees, assessments, and reports directly under their company's path (`/companies/{companyId}/employees`, `/companies/{companyId}/employees/{employeeId}/assessments`, `/companies/{companyId}/reports`), or using collection group queries filtered by `companyId` (where `companyId` is denormalized in the document). The denormalized `companyId` in `Assessment` and `Report` documents directly supports `list` queries for company admins.\n    - Employees can `list` their own assessments using queries on the denormalized `employeeAuthUid` field, which matches their `request.auth.uid`.\n    - The global `/questions` collection is designed to be fully readable by all authenticated users, allowing employees to `list` questions for assessments without complex filtering rules.\n\nThis design minimizes `get()` calls within security rules (especially across different entity types), simplifies authorization logic, and supports efficient querying and listing of data while enforcing strict access controls."
+  }
+}

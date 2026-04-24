@@ -1,0 +1,166 @@
+├── .agents
+│   ├── skills
+│   │   └── fbs-to-agy-export
+│   │       ├── references
+│   │       │   ├── flutter.md
+│   │       │   ├── nextjs.md
+│   │       │   └── other.md
+│   │       └── SKILL.md
+│   └── workflows
+│       └── fbs-to-agy-export.md
+├── .idx
+│   ├── dev.nix
+│   └── icon.png
+├── .vscode
+│   └── settings.json
+├── docs
+│   ├── backend.json
+│   └── blueprint.md
+├── src
+│   ├── ai
+│   │   ├── flows
+│   │   │   ├── dpdp-compliance-chatbot.ts
+│   │   │   ├── explain-assessment-answer.ts
+│   │   │   ├── generate-assessment-questions.ts
+│   │   │   └── generate-personal-recommendations.ts
+│   │   ├── dev.ts
+│   │   └── genkit.ts
+│   ├── app
+│   │   ├── admin
+│   │   │   ├── companies
+│   │   │   │   └── page.tsx
+│   │   │   ├── dashboard
+│   │   │   │   └── page.tsx
+│   │   │   └── questions
+│   │   │       └── page.tsx
+│   │   ├── company
+│   │   │   ├── dashboard
+│   │   │   │   ├── employees
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── reports
+│   │   │   │   │   └── page.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── employees
+│   │   │   │   └── page.tsx
+│   │   │   └── reports
+│   │   │       └── page.tsx
+│   │   ├── employee
+│   │   │   ├── assessment
+│   │   │   │   └── page.tsx
+│   │   │   ├── dashboard
+│   │   │   │   └── page.tsx
+│   │   │   ├── history
+│   │   │   │   └── page.tsx
+│   │   │   └── results
+│   │   │       └── page.tsx
+│   │   ├── lib
+│   │   │   └── placeholder-images.json
+│   │   ├── login
+│   │   │   └── page.tsx
+│   │   ├── signup
+│   │   │   └── page.tsx
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components
+│   │   ├── assessment
+│   │   │   └── question-card.tsx
+│   │   ├── auth
+│   │   │   ├── AuthCard.tsx
+│   │   │   ├── AuthInput.tsx
+│   │   │   ├── ForgotPasswordPanel.tsx
+│   │   │   └── RoleSelector.tsx
+│   │   ├── chat
+│   │   │   └── dpdp-chat.tsx
+│   │   ├── dashboard
+│   │   │   └── stat-card.tsx
+│   │   ├── landing
+│   │   │   ├── FeatureCard.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   ├── HeroCanvas.tsx
+│   │   │   ├── Navbar.tsx
+│   │   │   ├── RevealOnScroll.tsx
+│   │   │   ├── StatsBar.tsx
+│   │   │   └── StepCard.tsx
+│   │   ├── layout
+│   │   │   └── sidebar-nav.tsx
+│   │   ├── ui
+│   │   │   ├── accordion.tsx
+│   │   │   ├── alert-dialog.tsx
+│   │   │   ├── alert.tsx
+│   │   │   ├── avatar.tsx
+│   │   │   ├── badge.tsx
+│   │   │   ├── button.tsx
+│   │   │   ├── calendar.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── carousel.tsx
+│   │   │   ├── chart.tsx
+│   │   │   ├── checkbox.tsx
+│   │   │   ├── collapsible.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── form.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── maturity-badge.tsx
+│   │   │   ├── menubar.tsx
+│   │   │   ├── popover.tsx
+│   │   │   ├── progress.tsx
+│   │   │   ├── radio-group.tsx
+│   │   │   ├── score-ring.tsx
+│   │   │   ├── scroll-area.tsx
+│   │   │   ├── select.tsx
+│   │   │   ├── separator.tsx
+│   │   │   ├── sheet.tsx
+│   │   │   ├── sidebar.tsx
+│   │   │   ├── skeleton.tsx
+│   │   │   ├── slider.tsx
+│   │   │   ├── switch.tsx
+│   │   │   ├── table.tsx
+│   │   │   ├── tabs.tsx
+│   │   │   ├── textarea.tsx
+│   │   │   ├── toast.tsx
+│   │   │   ├── toaster.tsx
+│   │   │   └── tooltip.tsx
+│   │   └── FirebaseErrorListener.tsx
+│   ├── firebase
+│   │   ├── firestore
+│   │   │   ├── use-collection.tsx
+│   │   │   └── use-doc.tsx
+│   │   ├── client-provider.tsx
+│   │   ├── config.ts
+│   │   ├── error-emitter.ts
+│   │   ├── errors.ts
+│   │   ├── index.ts
+│   │   ├── non-blocking-login.tsx
+│   │   ├── non-blocking-updates.tsx
+│   │   └── provider.tsx
+│   ├── hooks
+│   │   ├── use-mobile.tsx
+│   │   └── use-toast.ts
+│   ├── lib
+│   │   ├── mock-data.ts
+│   │   ├── placeholder-images.json
+│   │   ├── placeholder-images.ts
+│   │   ├── types.ts
+│   │   └── utils.ts
+│   └── tailwind.config.ts
+├── .env
+├── .gitignore
+├── .modified
+├── apphosting.yaml
+├── components.json
+├── firestore.rules
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── PROJECT_CONTEXT.md
+├── README.md
+├── studio.json
+├── tailwind.config.ts
+├── tree_all.txt
+├── tree.txt
+└── tsconfig.json
