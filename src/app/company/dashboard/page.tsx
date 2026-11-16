@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { ScoreRing } from '@/components/ui/score-ring';
@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useCollection } from '@/firebase/firestore/use-collection';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { doc, collection, query, where, getDoc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 const SEV: Record<string,{color:string;bg:string;border:string}> = {
@@ -48,6 +48,17 @@ export default function CompanyDashboard() {
     return userDoc?.companyId ? doc(firestore, 'companies', userDoc.companyId) : null;
   }, [userDoc?.companyId, firestore]);
   const { data: companyDoc } = useDoc(companyDocRef);
+
+  // Companies created before join codes moved to joinCodes/{code} need that
+  // lookup document once; the company admin is allowed to create it.
+  useEffect(() => {
+    const code = (companyDoc as any)?.joinCode;
+    if (!code || !userDoc?.companyId || userDoc?.role !== 'company') return;
+    const ref = doc(firestore, 'joinCodes', code);
+    getDoc(ref)
+      .then((snap) => (snap.exists() ? null : setDoc(ref, { companyId: userDoc.companyId })))
+      .catch((err) => console.warn('Could not register join code', err));
+  }, [companyDoc, userDoc?.companyId, userDoc?.role, firestore]);
 
   const displayEmployees = useMemo(() => {
      return (realEmployees || []).map((e: any) => ({

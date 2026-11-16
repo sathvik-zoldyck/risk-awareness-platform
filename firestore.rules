@@ -1,126 +1,180 @@
 rules_version = '2';
+
+// Firestore security rules for the Risk Awareness Platform.
+//
+// Roles live on users/{uid}.role:
+//   admin    – platform operator. Never self-assigned; set it in the Firebase
+//              console (see README, "Create the first admin").
+//   company  – manages one company (users/{uid}.companyId).
+//   employee – belongs to one company and takes assessments.
+//
+// Join codes are looked up through joinCodes/{code} with a single-document
+// get. Companies themselves cannot be listed, so codes cannot be harvested.
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * ALCYONE SECURE SECURITY RULES - PROTOTYPING VERSION
-     */
+    // ── Helpers ─────────────────────────────────────────────────────────────
 
-    // --- HELPER FUNCTIONS ---
-
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function profilePath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
     }
 
-    function getUserData() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return userDoc == null ? null : userDoc.data;
+    function hasProfile() {
+      return signedIn() && exists(profilePath(request.auth.uid));
     }
 
-    function hasRole(role) {
-      let data = getUserData();
-      return data != null && data.role == role;
+    function me() {
+      return get(profilePath(request.auth.uid)).data;
     }
 
     function isAdmin() {
-      return hasRole('admin');
+      return hasProfile() && me().role == 'admin';
     }
 
-    function isCompanyAdmin(companyId) {
-      let data = getUserData();
-      return data != null && data.role == 'company' && data.companyId == companyId;
+    function isCompanyAdminOf(companyId) {
+      return hasProfile() && me().role == 'company' && me().companyId == companyId;
     }
 
-    // --- COLLECTION RULES ---
+    function isMemberOf(companyId) {
+      return hasProfile() && me().companyId == companyId;
+    }
 
-    /**
-     * Users Collection
-     */
+    function companyAdminUid(companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId)).data.adminUid;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ── Users ───────────────────────────────────────────────────────────────
+
     match /users/{userId} {
-      allow get: if isSignedIn();
-      // Admin sees all. Employees/Companies see only users from their own company
-      allow list: if isAdmin() || (isSignedIn() && getUserData() != null && resource.data.companyId == getUserData().companyId);
-      allow create: if isOwner(userId);
-      allow update: if (isOwner(userId) || isAdmin()) && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow get: if signedIn() && (
+        request.auth.uid == userId
+        || isAdmin()
+        || isCompanyAdminOf(resource.data.companyId)
+      );
+
+      // Company admins list their own employees; admins list everyone.
+      allow list: if isAdmin()
+        || (hasProfile() && me().role == 'company' && resource.data.companyId == me().companyId);
+
+      // Sign-up. Nobody can create an admin profile, a company profile must
+      // point at a company this user created, and an employee profile must
+      // carry a join code that belongs to the company it names.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role in ['company', 'employee']
+        && (
+          (request.resource.data.role == 'company'
+            && companyAdminUid(request.resource.data.companyId) == request.auth.uid)
+          ||
+          (request.resource.data.role == 'employee'
+            && request.resource.data.joinCode is string
+            && get(/databases/$(database)/documents/joinCodes/$(request.resource.data.joinCode)).data.companyId
+               == request.resource.data.companyId)
+        );
+
+      allow update: if isAdmin()
+        // Users edit their own profile but never their role or company.
+        || (signedIn() && request.auth.uid == userId
+            && !changedKeys().hasAny(['role', 'companyId', 'joinCode', 'email']))
+        // Company admins can only remove an employee from their company.
+        || (isCompanyAdminOf(resource.data.companyId)
+            && resource.data.role == 'employee'
+            && changedKeys().hasOnly(['companyId'])
+            && request.resource.data.companyId == null);
+
+      allow delete: if isAdmin();
     }
 
-    /**
-     * Companies Collection
-     */
+    // ── Companies ───────────────────────────────────────────────────────────
+
     match /companies/{companyId} {
-      // Allow anyone to GET a company doc (needed after employee joins via code)
+      allow get: if isAdmin()
+        || isMemberOf(companyId)
+        // The creator reads it during sign-up, before their profile exists.
+        || (signedIn() && resource.data.adminUid == request.auth.uid);
+
+      allow list: if isAdmin();
+
+      allow create: if signedIn()
+        && request.resource.data.adminUid == request.auth.uid
+        && request.resource.data.joinCode is string;
+
+      allow update: if isAdmin()
+        || (isCompanyAdminOf(companyId) && !changedKeys().hasAny(['adminUid', 'joinCode']));
+
+      allow delete: if isAdmin();
+
+      match /employees/{employeeId} {
+        allow get, list: if isAdmin() || isCompanyAdminOf(companyId)
+          || (signedIn() && resource.data.userId == request.auth.uid);
+        allow create: if (isAdmin() || isCompanyAdminOf(companyId))
+          && request.resource.data.companyId == companyId;
+        allow update: if isAdmin() || isCompanyAdminOf(companyId);
+        allow delete: if isAdmin() || isCompanyAdminOf(companyId);
+      }
+
+      match /reports/{reportId} {
+        allow get, list: if isAdmin() || isCompanyAdminOf(companyId);
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    // ── Join codes ──────────────────────────────────────────────────────────
+    //
+    // joinCodes/{code} = { companyId }. Anyone can check one code (that is how
+    // an employee joins), nobody can list them, and only the company's own
+    // admin can create the code for it.
+
+    match /joinCodes/{code} {
       allow get: if true;
-      // Allow unauthenticated list ONLY for join-code lookup; admins can list all
-      allow list: if isAdmin() || true;
-      // Allow creation if the signed in user assigns themselves as the adminUid
-      allow create: if isAdmin() || (isSignedIn() && request.resource.data.adminUid == request.auth.uid);
-      allow update: if (isAdmin() || isCompanyAdmin(companyId)) && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['companyId'])
+        && companyAdminUid(request.resource.data.companyId) == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin()
+        || (signedIn() && companyAdminUid(resource.data.companyId) == request.auth.uid);
     }
 
-    /**
-     * Nested Employee records (if utilized directly)
-     */
-    match /companies/{companyId}/employees/{employeeId} {
-      allow get, list: if isAdmin() || isCompanyAdmin(companyId) || (isSignedIn() && isOwner(resource.data.userId));
-      allow create: if (isAdmin() || isCompanyAdmin(companyId)) && request.resource.data.companyId == companyId;
-      allow update: if (isAdmin() || isCompanyAdmin(companyId) || isOwner(resource.data.userId)) && resource != null;
-      allow delete: if (isAdmin() || isCompanyAdmin(companyId)) && resource != null;
-    }
+    // ── Questions and settings ──────────────────────────────────────────────
 
-    /**
-     * Questions Collection
-     */
     match /questions/{questionId} {
-      allow get, list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin() && resource != null;
+      allow get, list: if signedIn();
+      allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * Nested Assessments
-     */
-    match /companies/{companyId}/employees/{employeeId}/assessments/{assessmentId} {
-      allow get, list: if isAdmin() || isCompanyAdmin(companyId) || (isSignedIn() && isOwner(resource.data.employeeAuthUid));
-      allow create: if isAdmin() || isCompanyAdmin(companyId) || (isSignedIn() && request.resource.data.employeeAuthUid == request.auth.uid);
-      allow update: if (isAdmin() || isCompanyAdmin(companyId) || isOwner(resource.data.employeeAuthUid)) && resource != null && request.resource.data.employeeAuthUid == resource.data.employeeAuthUid;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * Nested Reports
-     */
-    match /companies/{companyId}/reports/{reportId} {
-      allow get, list: if isAdmin() || isCompanyAdmin(companyId);
-      allow create, update: if isAdmin();
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    /**
-     * Assessment Attempts
-     * list: any signed-in user (query already filters by userId == request.auth.uid)
-     * get:  only the attempt owner or a company/admin user from the same company
-     * create: user can only stamp their own uid
-     * update/delete: immutable from client
-     */
-    match /assessment_attempts/{attemptId} {
-      allow get: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow list: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update, delete: if false;
-    }
-
-    /**
-     * Settings Collection
-     */
     match /settings/{document=**} {
-      allow read: if isSignedIn();
+      allow read: if signedIn();
       allow write: if isAdmin();
+    }
+
+    // ── Assessment attempts ─────────────────────────────────────────────────
+    //
+    // Rules are not filters: a query must ask only for documents the user may
+    // read. Employees query where('userId', '==', uid); admins query freely.
+
+    match /assessment_attempts/{attemptId} {
+      allow get: if signedIn() && (
+        resource.data.userId == request.auth.uid
+        || isAdmin()
+        || isCompanyAdminOf(resource.data.companyId)
+      );
+      allow list: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && (request.resource.data.companyId == '' || isMemberOf(request.resource.data.companyId));
+      // Attempts are a record: never edited or deleted from the client.
+      allow update, delete: if false;
     }
   }
 }

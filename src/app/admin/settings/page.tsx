@@ -36,9 +36,8 @@ export default function AdminSettings() {
     }
   }, [globalSettingsRaw]);
 
-  // Read API Key from environment
-  const rawApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
-  const apiKeyObscured = rawApiKey.length > 8 ? `${rawApiKey.substring(0, 4)}......${rawApiKey.substring(rawApiKey.length - 4)}` : 'UNKNOWN/MISING_KEY';
+  // The Gemini key is a server-only secret (GOOGLE_API_KEY); it is never
+  // sent to the browser, so the page only explains where it is configured.
 
   const handleSaveParameters = async () => {
     try {
@@ -88,7 +87,7 @@ export default function AdminSettings() {
                        <div className="space-y-3 flex-1 px-4">
                           <div>
                               <p className="text-[10px] font-bold text-[#00D4FF] uppercase tracking-wider mb-1">Current Key</p>
-                              <code className="font-mono text-sm text-white bg-white/5 px-2 py-1 rounded select-all break-all border border-white/10">{apiKeyObscured}</code>
+                              <code className="font-mono text-sm text-white bg-white/5 px-2 py-1 rounded break-all border border-white/10">GOOGLE_API_KEY (server only)</code>
                           </div>
                        </div>
                    </div>
