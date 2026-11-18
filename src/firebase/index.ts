@@ -1,9 +1,9 @@
 'use client';
 
-import { firebaseConfig } from '@/firebase/config';
+import { firebaseConfig, useFirebaseEmulators } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth';
+import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore'
 
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
@@ -49,12 +49,23 @@ export function initializeFirebase() {
   return getSdks(getApp());
 }
 
+// Each SDK instance may only be connected to an emulator once.
+const connectedToEmulators = new WeakSet<Auth | Firestore>();
+
 export function getSdks(firebaseApp: FirebaseApp) {
-  return {
-    firebaseApp,
-    auth: getAuth(firebaseApp),
-    firestore: getFirestore(firebaseApp)
-  };
+  const auth = getAuth(firebaseApp);
+  const firestore = getFirestore(firebaseApp);
+  if (useFirebaseEmulators) {
+    if (!connectedToEmulators.has(auth)) {
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectedToEmulators.add(auth);
+    }
+    if (!connectedToEmulators.has(firestore)) {
+      connectFirestoreEmulator(firestore, '127.0.0.1', 8080);
+      connectedToEmulators.add(firestore);
+    }
+  }
+  return { firebaseApp, auth, firestore };
 }
 
 export * from './provider';
