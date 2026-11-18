@@ -12,7 +12,7 @@ import { Navbar } from '@/components/landing/Navbar';
 import { Logo } from '@/components/common/Logo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDocs, setDoc, query, collection, where, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase/index';
 
 export default function SignupPage() {
@@ -36,8 +36,13 @@ export default function SignupPage() {
   // Company specifics
   const [companyName, setCompanyName] = useState('');
 
+  // 8 characters from an alphabet without look-alikes (no 0/O, 1/I/L),
+  // drawn with a cryptographic RNG. Codes are looked up one at a time
+  // through joinCodes/{code}, so they cannot be listed.
+  const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   const generateJoinCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    const bytes = crypto.getRandomValues(new Uint8Array(8));
+    return Array.from(bytes, (b) => JOIN_CODE_ALPHABET[b % JOIN_CODE_ALPHABET.length]).join('');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -54,21 +59,24 @@ export default function SignupPage() {
       const { auth, firestore } = initializeFirebase();
       let finalCompanyId = '';
 
+      const code = joinCode.trim().toUpperCase();
       if (role === 'employee') {
-        const q = query(collection(firestore, 'companies'), where('joinCode', '==', joinCode));
-        const snapshot = await getDocs(q);
-        
-        if (snapshot.empty) {
-          throw new Error('Invalid join code. Company not found.');
+        const codeSnap = code ? await getDoc(doc(firestore, 'joinCodes', code)) : null;
+        if (!codeSnap?.exists()) {
+          throw new Error('That join code was not found. Check it with your company admin.');
         }
-        finalCompanyId = snapshot.docs[0].id;
+        finalCompanyId = codeSnap.data().companyId;
       }
       
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
       
       if (role === 'company') {
-        const newJoinCode = generateJoinCode();
+        // Pick a code that is not already taken.
+        let newJoinCode = generateJoinCode();
+        for (let i = 0; i < 5 && (await getDoc(doc(firestore, 'joinCodes', newJoinCode))).exists(); i++) {
+          newJoinCode = generateJoinCode();
+        }
         const companyRef = doc(collection(firestore, 'companies'));
         finalCompanyId = companyRef.id;
         
@@ -79,6 +87,7 @@ export default function SignupPage() {
           employeeCount: 0,
           createdAt: serverTimestamp()
         });
+        await setDoc(doc(firestore, 'joinCodes', newJoinCode), { companyId: finalCompanyId });
         
         await setDoc(doc(firestore, 'users', uid), {
           name: fullName,
@@ -96,6 +105,7 @@ export default function SignupPage() {
           role: 'employee',
           jobRole: jobRole,
           companyId: finalCompanyId,
+          joinCode: code,
           createdAt: serverTimestamp()
         });
         
