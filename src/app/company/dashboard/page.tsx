@@ -114,7 +114,7 @@ export default function CompanyDashboard() {
       if (score < 70) {
          weakAreas.push({
              title: 'Overall Cyber Posture',
-             desc: 'Company average is significantly low, deploy remedial modules.',
+             desc: `Company average is ${score}%, below the 70% target. Assign refresher modules to the lowest scorers.`,
              severity: 'critical'
          });
       } else if (score < 80) {
