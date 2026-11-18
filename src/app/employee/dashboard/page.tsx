@@ -195,7 +195,7 @@ export default function EmployeeDashboard() {
             
             <div className="space-y-4">
               <div className="badge badge-cyan animate-breathe">Assessment Active</div>
-              <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 28 }}>2025 Cybersecurity Audit</h2>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 28 }}>{new Date().getFullYear()} Security Awareness Assessment</h2>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', maxWidth: 460 }}>
                 Evaluate your awareness of DPDP compliance, role-specific security practices, and risk mitigation strategies.
               </p>
