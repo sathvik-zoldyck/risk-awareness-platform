@@ -1,0 +1,35 @@
+name: Screenshots
+
+# Run by hand (Actions tab -> Screenshots -> Run workflow) to refresh the
+# README images. Uses the Firebase emulators and demo data; no secrets.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm install --no-save puppeteer-core@23.11.1
+      - run: npm run build
+      - run: npx firebase emulators:exec --only auth,firestore --project demo-risk-awareness "node .github/scripts/screenshots.mjs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots-out/

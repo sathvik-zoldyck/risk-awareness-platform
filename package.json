@@ -16,7 +16,10 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-risk-awareness \"tsx --test tests/firestore.rules.test.ts\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-risk-awareness \"tsx --test tests/firestore.rules.test.ts\"",
+    "dev:demo": "firebase emulators:exec --only auth,firestore --project demo-risk-awareness --ui \"node scripts/dev-demo.mjs\"",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-risk-awareness",
+    "seed:emulators": "tsx scripts/seed-emulators.ts"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.28.0",
