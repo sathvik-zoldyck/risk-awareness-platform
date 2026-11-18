@@ -1,0 +1,30 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Signed in as
+      options: [Employee, Company, Admin, Not signed in]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Click …
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "**Don't paste real employee data or API keys.** For security vulnerabilities, use private reporting (see SECURITY.md)."
