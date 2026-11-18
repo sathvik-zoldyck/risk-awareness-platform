@@ -1,12 +1,18 @@
 {
-  "name": "nextn",
-  "version": "0.1.0",
+  "name": "risk-awareness-platform",
+  "version": "1.0.0",
+  "description": "Security awareness and DPDP compliance assessments for companies and their employees, with an AI tutor and role-based dashboards.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sathvik-zoldyck/risk-awareness-platform.git"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "NODE_ENV=production next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
